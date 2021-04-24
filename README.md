@@ -15,7 +15,7 @@ But rewritten in the style of FP(Functional Programming), mainly, I thought
 details in ## Reference
 
 
-```nihil``` has zero dependencies and is about 5.5KB(exactly 5610Bytes) raw Javascript
+```nihil``` has zero dependencies and is about 5.5KB(exactly 5646Bytes) raw Javascript
 As for minifying and zipping, I haven't tried it.
 
 ```nihil``` source code uses some features of ES2015(or ES6),
