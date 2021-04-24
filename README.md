@@ -13,7 +13,7 @@ nihil is null, nothingness, etc, while ```nihil``` is useful and elegant
 [NPM](https://www.npmjs.com/package/nihil)
 
 ```nihil``` is a lot inspired by [bnb](https://github.com/wavebeem/bread-n-butter)
-But rewritten in the style of FP(Functional Programming), mainly, I thought
+But written in the style of FP(Functional Programming), mainly, I thought
 details in ## Reference
 
 
