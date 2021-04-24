@@ -9,6 +9,7 @@ WARNING : a TOY project current, do NOT use in production
 ```nihil``` is a parser combinator library for Javascript(ES2015+)
 
 nihil is null, nothingness, etc, while ```nihil``` is useful and elegant
+[NPM](https://www.npmjs.com/package/nihil)
 
 ```nihil``` is a lot inspired by [bnb](https://github.com/wavebeem/bread-n-butter)
 But rewritten in the style of FP(Functional Programming), mainly, I thought
