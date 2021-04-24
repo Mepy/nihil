@@ -123,7 +123,7 @@ nihil.map = parse=>f=>nihil.drop(parse)((value)=>nihil.box({value:f(value)}))
 
 nihil.lazy = fn=>nihil.parser(source=>fn()(source));
 nihil.recur = L=>I=>R=>(f=x=>x)=>{
-    var fM = ()=>
+    const fM = ()=>
     nihil.parser(
         nihil.or(
             nihil.map(
@@ -153,7 +153,7 @@ nihil.sep = parse=>seper=>{
         return a
     })
     return nihil.parser(source=>{
-        var ret = nihil.loop(sep)(source)
+        const ret = nihil.loop(sep)(source)
         if(ret.value||ret.nihil)//when loop parse nothing, ret.nihil=true helps
         {return nihil.nest(nihil.reverse(ret))}
         else{return ret}

@@ -38,7 +38,7 @@ However, I met some troubles :
    Because ```bnb``` implement parser with class
    Assign instance.parse to a variable will lose ```this``` pointer
 I decide to implement my own one, and I read the source code of ```bnb```
-But ```nihil``` is totally rewriten, I thought it should be NOT a derivative of ```bnb```
+But ```nihil``` is totally new written, I thought it should be NOT a derivative of ```bnb```
 The similarity between ```nihil``` and ```bnb``` might only be 
 ```bnb.match(RegExp)``` <=> ```nihil(RegExp)```
 and chain method ```.and```, ```.or```, etc.
