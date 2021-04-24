@@ -6,6 +6,7 @@ Author = Mepy
 
 ## Intro
 WARNING : a TOY project current, do NOT use in production
+
 ```nihil``` is a parser combinator library for Javascript(ES2015+)
 
 nihil is null, nothingness, etc, while ```nihil``` is useful and elegant
