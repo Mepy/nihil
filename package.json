@@ -1,0 +1,16 @@
+{
+  "name": "nihil",
+  "version": "0.1.0",
+  "description": "A tiny but elegant parser combinator library written by Mepy",
+  "main": "nihil.js",
+  "scripts": {
+    "test": "node ./test.js"
+  },
+  "keywords": [
+    "nihil",
+    "parser",
+    "combinator"
+  ],
+  "author": "Mepy",
+  "license": "MIT"
+}
