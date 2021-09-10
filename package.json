@@ -1,6 +1,6 @@
 {
   "name": "nihil",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A tiny but elegant parser combinator library written by Mepy",
   "main": "nihil.js",
   "scripts": {
@@ -12,5 +12,13 @@
     "combinator"
   ],
   "author": "Mepy",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mepy/nihil.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mepy/nihil/issues"
+  },
+  "homepage": "https://github.com/Mepy/nihil#readme"
 }

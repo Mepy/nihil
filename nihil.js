@@ -2,163 +2,145 @@ const nihil = expected => {
     if(typeof(expected)=="function"){return expected}//parser
     if(expected.raw){return nihil.nihil}
     else{
-        const RE = new RegExp(expected.source,expected.flags+"y");//"y" used at current
+        const RE = new RegExp(expected.source,expected.flags+"y");//"y" used at ima
         return nihil.parser(source=>{
-            const start = source.current
+            const start = source.ima
             RE.lastIndex = start;
             
             if(start==source.raw.length){return {
-                eof:true,
-                error:[{expected:String(expected),location:source.current,}],
-                //error is a array [] for the convenience of merge
+                right:false, error:{expected:String(expected),location:source.ima,},
             }}
             
             const matchResult = source.raw.match(RE);
         
             if(matchResult)
             {
+                if(matchResult[0].length==0)
+                    return nihil.nihil
                 const end = start + matchResult[0].length
-                source.current = end;
-
-                return {value:[matchResult[0]]}
+                source.ima = end;
+                
+                return {right:true, value:matchResult[0]}
                 //value is a array [] for the convenience of merge
             }
             else
             {
-                return {error:[{expected:String(expected),location:source.current}]}
-                //error is a array [] for the convenience of merge
+                return {right:false, error:{expected:String(expected),location:source.ima}}
             }
         })
     }
 }
 
 //special result
-nihil.nihil = {nihil:true}//return when nihil as a parser
-nihil.eof = {eof:true}
+nihil.nihil = {right:true, nihil:true}//return when nihil as a parser
 
-nihil.source = raw =>({raw,current:0})
-nihil.merge = (a,b)=>{
-    const {value:av,error:ae} = a;
-    const {value:bv,error:be} = b;
+nihil.source = raw =>({raw,ima:0})
 
-    const value = ((av!=undefined)//merge value, mainly used by nihil.and/keep/drop
-    ?((bv!=undefined)
-        ?[...bv,...av]
-        :av)
-    :((bv!=undefined)
-        ?bv
-        :undefined))
-
-    const error = ((ae!=undefined)//merge error, mainly used in nihil.or
-    ?((be!=undefined)
-        ?((ae[0].location&&be[0].location)
-            ?((ae[0].location<be[0].location)
-                ?be
-                :((ae[0].location==be[0].location)//when location equals, merge expected
-                    ?[...ae,...be]                //otherwise drop the former(in the axis of location)
-                    :ae))
-            :[...ae,...be])
-    :ae)
-
-    :((be!=undefined)
-        ?be
-        :undefined))
-    
-    //when b errs, drop a.nihil, mainly used in nihil.and/keep/drop
-    const nihil = (be)?b.nihil:a.nihil||b.nihil;
-
-    const eof = a.eof||b.eof;
-
-    return {value,error,nihil,eof}
+nihil.and = (...parsers)=>{
+    const Parsers = parsers.map(nihil);
+    for( ; Parsers[0]!==undefined && Parsers[0] == nihil ; Parsers.shift() );
+    const parser = (source)=>{
+        const value = []
+        for(const parser of Parsers)
+        {
+            const val = parser(source);
+            if(val.right)
+            {
+                if(val.nihil)
+                    ;
+                else
+                    value.push(val.value);
+            }
+            else
+                return val;
+        }
+        return {right:true, value};
+    };
+    return nihil.parser(parser);
 }
-
-nihil.and = (...parsers)=>parsers.map(nihil).reduce((A,B)=>nihil.parser(source=>{
-    
-    const a = A(source);
-    if((a.nihil==undefined&&a.error)){return a;}
-    //NO nihil BUT error => error, return a = {error,}
-    //nihil AND error => nihil, error is by the way given back to the caller
-
-    const b = B(source);
-    if((b.nihil==undefined&&b.error)){return b;}
-    
-    return nihil.merge(a,b)
-}))
-nihil.or = (...parsers)=>parsers.map(nihil).reduce((A,B)=>nihil.parser(source=>{
-    const current = source.current;//store for backtrack
-    const a = A(source);
-    if(a.value&&a.value.length!=0){return a;}
-    
-    source.current = current;//restore because a has no value <=> a={error,}||{nihil,}
-    const b = B(source);
-
-    if(b.value&&b.value.length!=0){return b;}
-
-    return nihil.merge(a,b)
-    
-}))
-
+nihil.or = (...parsers)=>{
+    const Parsers = parsers.map(nihil)
+    for( ; Parsers[0]!==undefined && Parsers[0] == nihil ; Parsers.shift() );
+    const error = [];
+    const parser = source=>{
+        const ima = source.ima;
+        for(const parser of Parsers)
+        {
+            const value = parser(source);
+            if(value.right)
+                return value;
+            else
+            {
+                source.ima = ima;
+                error.push(value.error)
+            }
+        }
+        return {right:false, error};
+    }
+    return nihil.parser(parser);
+}
 nihil.keep = A=>selector=>nihil.parser(source=>{
     const a = A(source);
-    if((a.nihil==undefined&&a.error)||a.eof){return a;}
-
-    const B = selector(a.value)
+    if(a.right==false){return a;}
+    const B = selector(a.value);
     const b = B(source);
-    if((b.nihil==undefined&&b.error)){return b;}
 
-    return nihil.merge(a,b);
+    if(b.right==false){return b;}
+
+    return ({right:true, value:[...a.value, b.value]});
 })
 nihil.drop = A=>selector=>nihil.parser(source=>{
     const a = A(source);
-    if((a.nihil==undefined&&a.error)||a.eof){return a;}
-
+    if(a.right==false){return a;}
     const B = selector(a.value)
     const b = B(source);
-    if((b.nihil==undefined&&b.error)){return b;}
+    if(b.right==false){return b;}
+    if(b.nihil){return b;}
 
-    return nihil.merge({error:a.error,nihil:a.nihil,eof:a.eof},b);
+    return {right:true, value:b.value};
 })
-nihil.box = result=>nihil.parser(source=>result)
-nihil.map = parse=>f=>nihil.drop(parse)((value)=>nihil.box({value:f(value)}))
+nihil.error = error=>nihil.parser(source=>({right:false, error}))
+nihil.box = value=>nihil.parser(source=>({right:true, value}))
 
-nihil.lazy = fn=>nihil.parser(source=>fn()(source));
-nihil.recur = L=>I=>R=>(f=x=>x)=>{
-    const fM = ()=>
-    nihil.parser(
-        nihil.or(
-            nihil.map(
-                nihil.and(
-                    L,
-                    nihil.lazy(fM),
-                    R,
-                )
-            )(f)
-            ,I
-        )        
-    )
-    return fM()
-}
-nihil.loop = parse=>nihil.recur(parse)(nihil)(nihil)()
+nihil.map = Parser=>Mapper=>nihil.parser(source=>{
+    const result = Parser(source)
+    if(result.value)
+        result.value = Mapper(result.value)
+    return result;
+})
 
-nihil.reverse = ({value:value})=>({value:value.reverse(),})
-nihil.nest = ({value})=>({value:[value]})
+nihil.sep = Parser=>seper=>nihil.parser(source=>{
+    seper(source);
+    const value = Parser(source);
+    seper(source);
+    return value;
+})
+//const unfold = a=>(a.length == 1)?a:([a[0],...a[1]])
+nihil.loop = //Parser=>Parser.and(_=>Parser(_)).map(unfold).or(nihil)
 
-nihil.sep = parse=>seper=>{
-    const sep = nihil.parser(source=>{
-        const a = parse(source)
-    
-        if((a.nihil==undefined)&&a.error||a.eof){return a}
-        
-        seper(source)//skip seper
-        return a
-    })
-    return nihil.parser(source=>{
-        const ret = nihil.loop(sep)(source)
-        if(ret.value||ret.nihil)//when loop parse nothing, ret.nihil=true helps
-        {return nihil.nest(nihil.reverse(ret))}
-        else{return ret}
-    })
-}
+Parser=>nihil.parser(source=>{
+    const value = [];
+    for(;;)
+    {
+        const ima = source.ima;
+        const val = Parser(source);
+        if(val.right)
+        {
+            if(val.nihil)
+                break;
+            else
+                value.push(val.value);
+        }
+        else
+        {
+            source.ima = ima;
+            break;
+        }
+    }
+    return {right:true, value};
+})
+
+nihil.wrap = (left,parse,right)=>nihil.and(left,parse,right).map(([l,v,r])=>v)
 
 nihil.parser = parse =>{
     parse.and = (...parsers)=>nihil.and(parse,...parsers)
@@ -168,20 +150,36 @@ nihil.parser = parse =>{
     parse.drop = nihil.drop(parse)
     parse.map = nihil.map(parse)
 
-    parse.recur = (L,R,f=x=>x)=>nihil.recur(nihil(L))(parse)(nihil(R))(nihil(f))
     parse.loop = ()=>nihil.loop(parse)
     parse.sep = (seper)=>nihil.sep(parse)(nihil(seper))
-    
-    parse.candy = (raw)=>{
-        const src = nihil.source(raw)
-        const result = parse(src)
+    parse.wrap = (left,right)=>nihil.wrap(nihil(left),parse,nihil(right))
 
-        //NO nihil BUT error=>error
-        if(result.nihil==undefined&&result.error){return {error:result.error}}
-        //no error, check eof
-        else if(src.current==src.raw.length){return nihil.reverse(result)}
-        else{return {error:{expected:"<eof>",location:src.current}}}
+    parse.label = (label)=>nihil.label(parse)(label)
+    parse.locate = ()=>nihil.locate(parse)
+
+    parse.try = (raw)=>{
+        const result = parse.parse(raw)
+        if(result.right!=true)
+            throw result.error;
+        return result.value;
     }
-
+    parse.parse = (raw)=>{
+        const source = nihil.source(raw)
+        const result = parse(source)
+        if(result.right!=true)
+            return result;
+        if(source.ima!=source.raw.length)
+            return ({right:false, error:{expected:"<eof>",location:source.ima}});
+        return result;
+    }
     return parse
 }
+
+nihil.location = nihil.parser(source=>({right:true, value:source.ima}))
+
+nihil.label = parser=>label=>parser.map(value=>({label,value}))
+nihil.locate = parser=>nihil
+    .and(nihil.location,parser,nihil.location)
+    .map(([beg,value,end])=>({beg,value,end}))
+    
+module.exports = nihil
