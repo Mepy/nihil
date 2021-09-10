@@ -1,6 +1,6 @@
 {
   "name": "nihil",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A tiny but elegant parser combinator library written by Mepy",
   "main": "nihil.js",
   "scripts": {
