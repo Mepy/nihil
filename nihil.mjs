@@ -210,4 +210,4 @@ nihil.dynamic = ()=>{
     }
     return parser
 }
-module.exports = nihil
+export { nihil }
